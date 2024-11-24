@@ -44,18 +44,21 @@ def on_startup():
 async def create_expenses(
     expenses: schemas.CreateExpenses, db: Session = Depends(get_db)
 ):
-    # check if user is in the database
-    users_query = db.query(models.User).filter(models.User.id == expenses.user_id)
-    if not users_query.first():
+
+    users_query = db.query(models.User).filter(models.User.telegram_id == expenses.telegram_id)
+    user = users_query.first()
+    if not user:
         raise HTTPException(status_code=404, detail="User not found")
     an_expenses = schemas.Expenses(
-        user_id=expenses.user_id,
+        user_id=user.id,
     )
+
     an_expenses.category, an_expenses.amount, an_expenses.description = (
         get_category_from_messages(expenses.message)
     )
     if an_expenses.category not in categories:
         raise HTTPException(status_code=400, detail="Invalid category")
+
     new_expenses = models.Expenses(**an_expenses.dict())
     db.add(new_expenses)
     db.commit()
@@ -72,11 +75,16 @@ def get_category_from_messages(message: str) -> tuple[str, Decimal, str]:
 
     message: {message}
     """
+    input_data = {"categories": categories, "message": message}
+
     prompt = ChatPromptTemplate.from_template(template)
     model = ChatOpenAI(model_name="gpt-4o-mini")
-    input_data = {"categories": categories, "message": message}
     chain = prompt | model | StrOutputParser()
+
     category_price_description = chain.invoke(input_data)
+    if not category_price_description:
+        raise HTTPException(status_code=400, detail="Invalid message")
+
     category = category_price_description.split(",")[0].strip()
     price = category_price_description.split(",")[1].strip()
     description = category_price_description.split(",")[2].strip()

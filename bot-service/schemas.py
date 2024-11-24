@@ -15,7 +15,7 @@ class Expenses(BaseModel):
 
 
 class CreateExpenses(BaseModel):
-    user_id: int
+    telegram_id: int
     message: str
 
     class Config:
