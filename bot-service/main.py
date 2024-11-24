@@ -75,11 +75,12 @@ def get_category_from_messages(message: str) -> tuple[str, Decimal, str]:
 
     message: {message}
     """
-    input_data = {"categories": categories, "message": message}
 
     prompt = ChatPromptTemplate.from_template(template)
     model = ChatOpenAI(model_name="gpt-4o-mini")
     chain = prompt | model | StrOutputParser()
+
+    input_data = {"categories": categories, "message": message}
 
     category_price_description = chain.invoke(input_data)
     if not category_price_description:
