@@ -12,7 +12,7 @@ export TELEGRAM_TOKEN=8071685814:AAE3KmXABZwFg5beAuiSJ8501z1QzSwJtpE
 export BOT_SERVICE=http://127.0.0.1:8000/
 
 install-bot-service:
-	cd bot-service && docker compose up -d
+	cd bot-service && docker compose up -d && poetry install;
 
 
 install-connector-service:

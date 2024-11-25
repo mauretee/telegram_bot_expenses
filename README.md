@@ -1,10 +1,8 @@
 # telegram_bot_expenses
 
-# A simple telegram bot to manage expenses.
-The current version of the bot is running on Heroku and can be accessed by the link: [https://t.me/mjldarwinbot](https://t.me/mjldarwinbot)
-
 # How to use the bot
-Send the command `/start` to the bot to start using it. Then start sending messages to the bot with the following format:
+Send the command `/start` to the bot to start using it after taht send the command /addMe to add yourself to the database.
+
 ```
   Pizza 20 bucks
 ```
@@ -17,6 +15,8 @@ For more information about the implementation check the README in the respective
 
 # Running the bot locally
 Complete the OPENAI_API_KEY in makefile after that run the following command:
+The current bot is running on: [https://t.me/mjldarwinbot](https://t.me/mjldarwinbot). You can change the bot changing the TELGRAM_TOKEN in the makefile.
+
 ```
 make
 ```
