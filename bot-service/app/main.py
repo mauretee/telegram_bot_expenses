@@ -1,21 +1,21 @@
-# from typing import tuple
 from fastapi import FastAPI
 from decimal import Decimal
 from fastapi import HTTPException, Depends
 from sqlalchemy.orm import Session
-import models
-import schemas
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from database import get_db, engine
-from utils import get_env_variable
+from .database import get_db, engine
+from .models import User, Expenses
+from . import schemas
+from .database import Base
+from .utils import get_env_variable
+from .exceptions import NotExpensesFound
 
 
 OPENAI_API_KEY = get_env_variable("OPENAI_API_KEY")
-
-
-categories = [
+GPT_MODEL = "gpt-4o-mini"
+CATEGORIES = [
     "Housing",
     "Transportation",
     "Food",
@@ -32,7 +32,7 @@ app = FastAPI()
 
 
 def create_db_and_tables():
-    models.Base.metadata.create_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
 
 
 @app.on_event("startup")
@@ -45,21 +45,21 @@ async def create_expenses(
     expenses: schemas.CreateExpenses, db: Session = Depends(get_db)
 ):
 
-    users_query = db.query(models.User).filter(models.User.telegram_id == expenses.telegram_id)
+    users_query = db.query(User).filter(User.telegram_id == expenses.telegram_id)
     user = users_query.first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     an_expenses = schemas.Expenses(
         user_id=user.id,
     )
+    try:
+        an_expenses.category, an_expenses.amount, an_expenses.description = (
+            get_category_from_messages(expenses.message)
+        )
+    except NotExpensesFound:
+        raise HTTPException(status_code=400, detail="Not an expense")
 
-    an_expenses.category, an_expenses.amount, an_expenses.description = (
-        get_category_from_messages(expenses.message)
-    )
-    if an_expenses.category not in categories:
-        raise HTTPException(status_code=400, detail="Invalid category")
-
-    new_expenses = models.Expenses(**an_expenses.dict())
+    new_expenses = Expenses(**an_expenses.dict())
     db.add(new_expenses)
     db.commit()
     db.refresh(new_expenses)
@@ -70,21 +70,21 @@ async def create_expenses(
 def get_category_from_messages(message: str) -> tuple[str, Decimal, str]:
     template = """Select the category that best describes the following expense,
     and provide the price and a description. Only return the category name,
-    the price and the description. For example, "Food, 10.00, I bought a sandwich." :
+    the price and the description. For example, "Food, 10.00, I bought a sandwich." and in case of failure return an empty string. :
     {categories}
 
     message: {message}
     """
 
     prompt = ChatPromptTemplate.from_template(template)
-    model = ChatOpenAI(model_name="gpt-4o-mini")
+    model = ChatOpenAI(model_name=GPT_MODEL)
     chain = prompt | model | StrOutputParser()
 
-    input_data = {"categories": categories, "message": message}
+    input_data = {"categories": CATEGORIES, "message": message}
 
     category_price_description = chain.invoke(input_data)
-    if not category_price_description:
-        raise HTTPException(status_code=400, detail="Invalid message")
+    if "," not in category_price_description:
+        raise NotExpensesFound()
 
     category = category_price_description.split(",")[0].strip()
     price = category_price_description.split(",")[1].strip()
