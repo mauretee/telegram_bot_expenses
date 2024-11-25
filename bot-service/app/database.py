@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+
 from .utils import get_env_variable
 
 POSTGRES_DB = get_env_variable("POSTGRES_DB")

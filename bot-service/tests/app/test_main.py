@@ -1,9 +1,12 @@
+from decimal import Decimal
+
 import pytest
 from fastapi.testclient import TestClient
-from decimal import Decimal
-from app.main import app, get_category_from_messages
+
 from app.exceptions import NotExpensesFound
+from app.main import app, get_category_from_messages
 from app.models import User
+
 from ..conftest import db
 
 client = TestClient(app)

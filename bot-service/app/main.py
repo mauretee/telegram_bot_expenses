@@ -1,17 +1,16 @@
-from fastapi import FastAPI
 from decimal import Decimal
-from fastapi import HTTPException, Depends, status
-from sqlalchemy.orm import Session
+
+from fastapi import Depends, FastAPI, HTTPException, status
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
-from .database import get_db, engine
-from .models import User, Expenses
-from . import schemas
-from .database import Base
-from .utils import get_env_variable
-from .exceptions import NotExpensesFound
+from sqlalchemy.orm import Session
 
+from . import schemas
+from .database import Base, engine, get_db
+from .exceptions import NotExpensesFound
+from .models import Expenses, User
+from .utils import get_env_variable
 
 OPENAI_API_KEY = get_env_variable("OPENAI_API_KEY")
 GPT_MODEL = "gpt-4o-mini"

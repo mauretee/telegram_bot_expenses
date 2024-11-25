@@ -1,15 +1,16 @@
 import logging
-import pytest
 from typing import Generator
+
+import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import ProgrammingError
-from app.database import POSTGRES_DB, POSTGRES_PASSWORD, Base
-from app.utils import get_env_variable
+from sqlalchemy.orm import sessionmaker
+
+from app.database import POSTGRES_DB, POSTGRES_PASSWORD, Base, get_db
 from app.main import app
 from app.models import User
-from app.database import get_db
-from fastapi.testclient import TestClient
+from app.utils import get_env_variable
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
