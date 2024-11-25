@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from decimal import Decimal
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -38,6 +38,23 @@ def create_db_and_tables():
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
+
+
+@app.post('/user/', status_code=status.HTTP_201_CREATED, response_model=schemas.User)
+async def create_user(
+    new_user: schemas.CreateUser, db: Session = Depends(get_db)
+):
+    users_query = db.query(User).filter(User.telegram_id == new_user.telegram_id)
+    user = users_query.first()
+    if user:
+        raise HTTPException(status_code=400, detail="User already exists")
+    user = User(telegram_id=new_user.telegram_id)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
 
 
 @app.post("/", response_model=schemas.Expenses)

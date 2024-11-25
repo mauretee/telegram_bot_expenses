@@ -3,7 +3,8 @@ const TelegramBot = require("node-telegram-bot-api");
 // replace the value below with the Telegram token you receive from @BotFather
 const token = process.env.TELEGRAM_TOKEN;
 const botService = process.env.BOT_SERVICE;
-
+console.log("Token:", token);
+console.log("Bot Service:", botService);
 // Create a bot that uses 'polling' to fetch new updates
 const bot = new TelegramBot(token, { polling: true });
 
@@ -20,9 +21,36 @@ bot.onText(/\/echo (.+)/, (msg, match) => {
   bot.sendMessage(chatId, resp);
 });
 
+bot.onText(/\/addMe/, async (msg) => {
+  const chatId = msg.chat.id;
+  try {
+    const response = await fetch(`${botService}user/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        telegram_id: chatId,
+      }),
+    });
+    if (response.status === 400) {
+      bot.sendMessage(chatId, "You are already registered");
+    }
+    if (response.status == 201) {
+      bot.sendMessage(chatId, "You have been registered successfully");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    bot.sendMessage(chatId, "There was an error processing your request.");
+  }
+});
+
 // Listen for any kind of message. There are different kinds of messages.
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
+  if (msg.text === "/echo" || msg.text === "/addMe") {
+    return;
+  }
 
   try {
     const response = await fetch(botService, {

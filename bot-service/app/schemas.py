@@ -19,3 +19,18 @@ class CreateExpenses(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class CreateUser(BaseModel):
+    telegram_id: int
+
+    class Config:
+        orm_mode = True
+
+
+class User(BaseModel):
+    id: int
+    telegram_id: int
+
+    class Config:
+        orm_mode = True

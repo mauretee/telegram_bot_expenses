@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from decimal import Decimal
 from app.main import app, get_category_from_messages
 from app.exceptions import NotExpensesFound
+from app.models import User
 from ..conftest import db
 
 client = TestClient(app)
@@ -45,3 +46,15 @@ def test_create_not_an_expenses(client, user):
     })
     assert response.status_code == 400
     assert response.json() == {"detail": "Not an expense"}
+
+
+def test_create_user(client, db):
+    response = client.post("/user/", json={"telegram_id": "1"})
+    assert response.status_code == 201
+    users = db.query(User).filter(User.telegram_id == 1)
+    user = users.first()
+    assert user.telegram_id == 1
+
+def test_create_user_already_exist(client, db, user):
+    response = client.post("/user/", json={"telegram_id": "1"})
+    assert response.status_code == 400
